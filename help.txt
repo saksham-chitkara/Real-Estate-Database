@@ -1,0 +1,51 @@
+Selection:
+    1 : List all investors with their type and risk assessment
+    2 : List all tenants and their preferences
+    3 : List all properties currently for sale (status = Available)
+    4 : List all property dealers with their contact info
+
+Projection:
+    5 : List investors who have invested in projects across multiple cities
+    6 : List all ongoing projects for a given firm (FIRM_ID)
+    7 : List the top 5 most expensive properties
+
+Aggregate:
+    8 : Show average revenue of high reputation marketing firms
+    9 : Show investment stats (total, average ROI) for last year
+    10 : Show average risk and ROI for each project by contractor type
+    11 : Show total number of properties in the database
+    12 : Show average credit score of all tenants
+
+Search:
+    13 : Search properties by keyword in their name (KEYWORD)
+    14 : Search properties by amenities and price range (MIN_PRICE, MAX_PRICE, AMENITIES)
+    15 : List marketing firms by specialization (SPECIALIZATION)
+
+Analysis:
+    16 : Show investment ROI trends over the years
+    17 : Analyze average property value by amenity
+    18 : Analyze investment success by construction firm rating
+    19 : Analyze marketing impact on property value and lease duration
+    20 : Analyze investor preferences by property type
+    21 : Analyze city-wise investment and property value distribution
+
+Modification:
+    22 : Insert a new project investment (all required fields)
+    23 : Insert a new tenant (all required fields)
+    24 : Insert a new property (all required fields)
+
+Update:
+    25 : Update projected ROI for all ongoing projects
+    26 : Increase reputation for marketing firms with >100 clients and recent founding
+    27 : Set a specific reputation rating for a marketing firm (REPUTATION, FIRM_ID)
+
+Deletion:
+    28 : Delete tenants with poor payment history
+    29 : Delete all properties marked for demolition
+    30 : Delete all high risk investments
+
+Other Commands:
+    h : Show help
+    q : Quit
+
+You can use either the number or the command as shown above.
