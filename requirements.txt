@@ -1,0 +1,5 @@
+# Requirements for Real Estate Database project
+mysql-connector-python
+pymysql
+tabulate
+faker
