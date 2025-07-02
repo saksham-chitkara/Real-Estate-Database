@@ -70,9 +70,11 @@ professionals, enhancing transparency, efficiency, and profitability across the 
 - All relations are in 2NF (since all non-prime attributes are fully functionally dependent on the primary key).
 - 2NF is the same as 1NF for this schema.
 
-![2NF Diagram](diagrams/2nf.png)
+![2NF Diagram](diagrams/1nf.png)
 
 ### 3NF (Third Normal Form)
 
 - All relations are in 3NF (no transitive dependencies; all attributes depend only on the key).
 - See relational model for details.
+
+![3NF Diagram](diagrams/3nf.png)
