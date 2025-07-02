@@ -78,3 +78,55 @@ professionals, enhancing transparency, efficiency, and profitability across the 
 - See relational model for details.
 
 ![3NF Diagram](diagrams/3nf.png)
+
+---
+
+## Project Setup Instructions
+
+### 1. Database Configuration
+
+**Before running the project, fill in your MySQL credentials in all of the following files:**
+- `db_connection.py` (class `DBconnection`)
+- `fill_db.py` (the `DB_CONFIG` dictionary)
+- `setup_database.py` (variables at the top)
+
+> **Make sure to set:**
+> - Host (e.g., `localhost`)
+> - Port (e.g., `3306`)
+> - User (your MySQL username)
+> - Password (your MySQL password)
+> - Database (e.g., `REAL_ESTATE`)
+
+---
+
+### 2. Setup Steps
+
+**Follow these steps to set up and run the project:**
+
+1. **Install requirements**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Set up the database schema**
+   ```bash
+   python setup_database.py
+   ```
+   - This creates the database and all tables as per `schema.sql`.
+
+3. **Populate the database with sample data**
+   ```bash
+   python fill_db.py
+   ```
+   - This will insert sample data for all tables.
+
+4. **Run the CLI application**
+   ```bash
+   python main.py
+   ```
+   - Use the CLI to interact with the database. You can use query numbers (1-30) or commands as shown in `help.txt`.
+
+---
+
+**Note:**  
+- For troubleshooting, check that MySQL is running and accessible with the credentials you provided.

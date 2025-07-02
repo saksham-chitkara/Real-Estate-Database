@@ -1,5 +1,8 @@
-from DBconnection import DBconnection
-import functional_req as fr
+from db_connection import DBconnection
+import cli_dispatcher as fr
+from colorama import Fore, Style, init
+init(autoreset=True)
+MAGENTA = Fore.MAGENTA + Style.BRIGHT
 
 def print_help():
     with open('help.txt', 'r') as f:
@@ -11,7 +14,8 @@ if __name__ == "__main__":
 
     dbms = DBconnection()
     while True:
-        cmd = input('> ').strip()
+        print(MAGENTA + "Type a query index, or 'h' for help, 'q' to quit:")
+        cmd = input(MAGENTA + "Your choice: " + Style.RESET_ALL).strip()
         cmd_list = list(map(lambda s: s.strip(), cmd.split(' ')))
         operations = {
             'select': fr.select,
@@ -43,9 +47,9 @@ if __name__ == "__main__":
             if int(cmd) in operations_num:
                 operations_num[int(cmd)](cmd_list, dbms, int(cmd))
             else:
-                print(f"{cmd} : Invalid Command Number")
+                print(Fore.RED + f"{cmd} : Invalid Command Number")
         elif len(cmd_list) and cmd_list[0].lower() in operations:
             operations[cmd_list[0].lower()](cmd_list, dbms)
         else:
-            print(f"{cmd_list[0]} : Invalid Command")
+            print(Fore.RED + f"{cmd_list[0]} : Invalid Command")
     dbms.close()

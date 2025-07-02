@@ -4,7 +4,12 @@ def SELECT(query_type, *args):
     if query_type == 'all_investors':
         return ("SELECT InvestorID, Name, InvestorType, RiskAssessment FROM Investor;", None)
     elif query_type == 'all_tenants':
-        return ("SELECT TenantID, Name, Preferences FROM Tenant;", None)
+        return ("""
+        SELECT T.TenantID, T.Name, GROUP_CONCAT(TP.Preference) AS Preferences 
+        FROM Tenant T 
+        LEFT JOIN TenantsPreferences TP ON T.TenantID = TP.TenantID 
+        GROUP BY T.TenantID, T.Name;
+        """, None)
     elif query_type == 'properties_for_sale':
         return ("SELECT PropertyID, Name, Status FROM RealProperty WHERE Status = 'Available';", None)
     elif query_type == 'property_dealers':
@@ -57,12 +62,14 @@ def SEARCH(query_type, *args):
     elif query_type == 'properties_by_amenities_and_price':
         return ("""
         SELECT DISTINCT RealProperty.PropertyID, RealProperty.Name, RealProperty.Address_City, GROUP_CONCAT(DISTINCT PA.Amenity) AS Amenities
-        FROM RealProperty JOIN PropertyAmenities PA ON PA.PropertyID = RealProperty.PropertyID
-        WHERE (Price BETWEEN %s AND %s) AND (PA.Amenity IN %s)
-        GROUP BY RealProperty.PropertyID;
-        """, (args[0], args[1], args[2]))
+        FROM RealProperty 
+        JOIN PropertyAmenities PA ON PA.PropertyID = RealProperty.PropertyID
+        WHERE RealProperty.Price BETWEEN %s AND %s
+        GROUP BY RealProperty.PropertyID
+        HAVING FIND_IN_SET(%s, GROUP_CONCAT(PA.Amenity)) > 0;
+        """, (args[0], args[1], ','.join(args[2]) if isinstance(args[2], list) else args[2]))
     elif query_type == 'marketing_firms_by_specialization':
-        return ("SELECT * FROM MarketingFirm WHERE Specialization IN (%s);", (args[0],))
+        return ("SELECT * FROM MarketingFirm WHERE Specialization = %s;", (args[0],))
     return (None, None)
 
 def ANALYSIS(query_type, *args):
@@ -85,7 +92,7 @@ def ANALYSIS(query_type, *args):
     elif query_type == 'most_expensive_property':
         return ("SELECT PropertyID, Name, Price FROM RealProperty ORDER BY Price DESC LIMIT 1;", None)
     elif query_type == 'tenant_with_highest_credit':
-        return ("SELECT TenantID, Name, CreditScore FROM LesseDetails ORDER BY CreditScore DESC LIMIT 1;", None)
+        return ("SELECT LesseID, Name, CreditScore FROM LesseDetails ORDER BY CreditScore DESC LIMIT 1;", None)
     elif query_type == 'investment_roi_trends':
         return ("""
         SELECT YEAR(PI.InvestmentDate) AS Year, 
@@ -122,9 +129,9 @@ def ANALYSIS(query_type, *args):
         SELECT MF.Specialization,
                AVG(MF.ReputationRating) AS AvgReputation,
                AVG(RP.Price) AS AvgPropertyPrice,
-               AVG(DATEDIFF(L.EndDate, L.StartDate))/30 AS AvgLeaseMonths
+               AVG(DATEDIFF(L.LeaseEndDate, L.LeaseStartDate))/30 AS AvgLeaseMonths
         FROM MarketingFirm MF
-        JOIN RealProperty RP ON MF.MarketFirmID = RP.MarketingFirmID
+        JOIN RealProperty RP ON MF.MarketFirmID = RP.MarketFirmID
         LEFT JOIN Lease L ON RP.PropertyID = L.PropertyID
         GROUP BY MF.Specialization
         ORDER BY AvgPropertyPrice DESC;
@@ -137,8 +144,8 @@ def ANALYSIS(query_type, *args):
                SUM(PI.InvestedAmount) AS TotalInvestment,
                AVG(PI.ProjectedROI) AS AvgROI
         FROM Investor I
-        JOIN InvestmentsInProject IIP ON I.InvestorID = IIP.InvestorID
-        JOIN ProjectInvestments PI ON IIP.InvestmentID = PI.InvestmentID
+        JOIN InvestmentsInProject iIP ON I.InvestorID = iIP.InvestorID
+        JOIN ProjectInvestments PI ON iIP.InvestmentID = PI.InvestmentID
         JOIN Project P ON PI.ProjectConcerned = P.ProjectID
         JOIN RealProperty RP ON P.PropertyID = RP.PropertyID
         GROUP BY I.InvestorType, RP.PropertyType
@@ -166,16 +173,19 @@ def INSERT(query_type, *args):
         VALUES (%s, %s, %s, %s, %s, %s, %s)
         """, args)
     elif query_type == 'new_tenant':
-        return ("INSERT INTO Tenant (TenantID, Name, Preferences, PaymentHistory) VALUES (%s, %s, %s, %s);", args)
-    elif query_type == 'property':
-        return ("INSERT INTO RealProperty (PropertyID, Name, Description, Price, Status, PropertyType, Amenities, DeveloperFirmID) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);", args)
+        return ("INSERT INTO Tenant (TenantID, Name, DependsOn) VALUES (%s, %s, %s);", args)
+    elif query_type == 'lessee_details':
+        return ("""
+        INSERT INTO LesseDetails (LesseID, Name, Occupation, AnnualIncome, LeasePurpose, CreditScore, GuarantorContact)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, args)
     return (None, None)
 
 def UPDATE(query_type, *args):
     if query_type == 'projected_roi':
         return ("UPDATE ProjectInvestments SET ProjectedROI = ProjectedROI * 1.05 WHERE ProjectConcerned IN (SELECT ProjectID FROM Project WHERE Status = 'Ongoing');", None)
     elif query_type == 'marketing_firm_reputation':
-        return ("UPDATE MarketingFirm SET ReputationRating = ReputationRating + 1 WHERE NumberOfClients > 100 AND FoundedYear >= '2023-01-01';", None)
+        return ("UPDATE MarketingFirm SET ReputationRating = ReputationRating + 1 WHERE NumberOfClients > 100 AND FoundedYear >= 2020;", None)
     elif query_type == 'specific_marketing_firm_reputation':
         return ("UPDATE MarketingFirm SET ReputationRating = %s WHERE MarketFirmID = %s;", (args[0], args[1]))
     return (None, None)
@@ -183,12 +193,16 @@ def UPDATE(query_type, *args):
 def DELETE(query_type, *args):
     if query_type == 'tenants_with_poor_payment_history':
         return ("""
-        DELETE FROM Tenant WHERE TenantID IN (SELECT TenantID FROM PaymentHistory GROUP BY TenantID HAVING COUNT(*) < 5);
+        DELETE FROM Tenant WHERE TenantID IN (
+            SELECT DISTINCT TenantID FROM PaymentsOfTenants 
+            GROUP BY TenantID 
+            HAVING COUNT(*) < 3
+        );
         """, None)
     elif query_type == 'properties_for_demolition':
         return ("DELETE FROM RealProperty WHERE Status = 'Marked for Demolition';", None)
     elif query_type == 'high_risk_investments':
-        return ("DELETE FROM ProjectInvestments WHERE RiskLevel > 9;", None)
+        return ("DELETE FROM ProjectInvestments WHERE RiskLevel > 8;", None)
     return (None, None)
 
 # CLI command to query mapping
