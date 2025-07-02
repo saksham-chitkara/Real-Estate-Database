@@ -32,7 +32,7 @@ Analysis:
 Modification:
     22 : Insert a new project investment (all required fields)
     23 : Insert a new tenant (all required fields)
-    24 : Insert a new property (all required fields)
+    24 : Insert a new lessee (LesseDetails) with all required fields
 
 Update:
     25 : Update projected ROI for all ongoing projects

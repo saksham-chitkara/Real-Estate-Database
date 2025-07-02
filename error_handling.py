@@ -1,3 +1,6 @@
+from colorama import Fore, Style, init
+init(autoreset=True)
+
 def incomplete_arguments(cmd_name: str):
     print(f"{cmd_name} : Incomplete Arguments")
 
@@ -14,7 +17,7 @@ def compare_list(length: int, ideal: int, cmd_name: str):
 
 
 def db_error(err_msg: str):
-    print(f"Database Error: {err_msg}")
+    print(Fore.RED + f"Database Error: {err_msg}")
 
 
 def permission_error(cmd_name: str):
