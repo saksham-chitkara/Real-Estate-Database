@@ -6,10 +6,10 @@ from itertools import cycle
 
 # Database configuration
 DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'Saksham@2023',
-    'database': 'REAL_ESTATE'
+    'host': '',      # Fill your host (e.g., localhost)
+    'user': '',      # Fill your MySQL username
+    'password': '',  # Fill your MySQL password
+    'database': ''   # Fill your database name (e.g., REAL_ESTATE)
 }
 
 # Ensure database exists before connecting
@@ -88,16 +88,10 @@ class ComprehensiveRealEstatePopulator:
 
         firms = []
         for _ in range(num_firms):
-            while True:
-                location = self.fake.unique.city()
-                if location not in self.used_locations:
-                    self.used_locations.add(location)
-                    break
-            
             firm = (
                 self.generate_unique_id(),
                 self.fake.company(),
-                location,
+                self.generate_unique_location(),
                 self.fake.random_int(min=1990, max=2024),
                 self.generate_unique_contact(),
                 random.choice(specializations),
@@ -114,6 +108,7 @@ class ComprehensiveRealEstatePopulator:
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         self.execute_many(insert_query, firms)
+        return firms
 
     def generate_unique_location(self):
         """Helper method to generate unique locations"""
@@ -122,32 +117,6 @@ class ComprehensiveRealEstatePopulator:
             if location not in self.used_locations:
                 self.used_locations.add(location)
                 return location
-
-    def generate_marketing_firms(self, num_firms=5):
-        """Generate marketing firms with UNIQUE constraints"""
-        firms = []
-        for _ in range(num_firms):
-            firm = (
-                self.generate_unique_id(),
-                self.fake.company(),
-                self.generate_unique_location(),
-                self.fake.random_int(min=1990, max=2024),
-                self.generate_unique_contact(),
-                random.choice(['Residential', 'Commercial', 'Both']),
-                random.randint(0, 10),
-                random.randint(10, 1000),
-                round(self.fake.pydecimal(left_digits=16, right_digits=2, positive=True), 2)
-            )
-            firms.append(firm)
-        
-        insert_query = """
-        INSERT IGNORE INTO MarketingFirm 
-        (MarketFirmID, Name, Location, FoundedYear, ContactInfo, 
-        Specialization, ReputationRating, NumberOfClients, AnnualRevenue) 
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """
-        self.execute_many(insert_query, firms)
-        return firms
 
     def generate_services_of_marketing_firm(self, firms):
         """Generate services for marketing firms"""
@@ -852,39 +821,37 @@ class ComprehensiveRealEstatePopulator:
         try:
             print("Starting database population...")
             # Data volume constants
-            SMALL_VOLUME = 500
-            MEDIUM_VOLUME = 2000
-            LARGE_VOLUME = 10000
+            ENTRY_COUNT = 60  # Use 60 entries per table (adjust as needed)
 
             print("Generating marketing firms...")
-            marketing_firms = self.generate_marketing_firms(SMALL_VOLUME)
+            marketing_firms = self.generate_marketing_firms(ENTRY_COUNT)
             self.generate_services_of_marketing_firm(marketing_firms)
 
             print("Generating properties...")
-            properties = self.generate_real_property(marketing_firms, LARGE_VOLUME)
+            properties = self.generate_real_property(marketing_firms, ENTRY_COUNT)
             self.generate_property_amenities(properties)
 
             print("Generating construction firms...")
-            construction_firms = self.generate_construction_firms(SMALL_VOLUME)
+            construction_firms = self.generate_construction_firms(ENTRY_COUNT)
             self.generate_reviews_of_firms(construction_firms)
 
             print("Generating dealers and purchasers...")
-            property_dealers = self.generate_property_dealers(MEDIUM_VOLUME)
-            purchasers = self.generate_purchaser(MEDIUM_VOLUME)
+            property_dealers = self.generate_property_dealers(ENTRY_COUNT)
+            purchasers = self.generate_purchaser(ENTRY_COUNT)
 
             print("Generating lesse details...")
-            lesses = self.generate_lesse_details(MEDIUM_VOLUME)
+            lesses = self.generate_lesse_details(ENTRY_COUNT)
 
             print("Generating real estate...")
-            self.generate_real_estate(properties)
+            self.generate_real_estate(properties, ENTRY_COUNT)
 
             print("Generating investors...")
-            investors = self.generate_investors(MEDIUM_VOLUME)
+            investors = self.generate_investors(ENTRY_COUNT)
             self.generate_mentors(investors)
             self.generate_preferences_of_investors(investors)
 
             print("Generating projects...")
-            projects = self.generate_projects(construction_firms, properties, LARGE_VOLUME)
+            projects = self.generate_projects(construction_firms, properties, ENTRY_COUNT)
             project_investments = self.generate_project_investments(projects, investors)
             self.generate_investments_in_project(project_investments, investors)
             self.generate_real_estate_investment(investors, projects)
@@ -893,7 +860,7 @@ class ComprehensiveRealEstatePopulator:
             deals = self.generate_deals(properties, property_dealers, purchasers, construction_firms)
 
             print("Generating tenants...")
-            tenants = self.generate_tenants(LARGE_VOLUME)
+            tenants = self.generate_tenants(ENTRY_COUNT)
             self.generate_tenantspreferences(tenants)
             self.generate_payments_of_tenants(tenants)
             self.generate_rental_relationship(tenants, properties)

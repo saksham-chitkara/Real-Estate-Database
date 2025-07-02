@@ -1,12 +1,15 @@
 import pymysql
 import pymysql.cursors
+from colorama import Fore, Style, init
+init(autoreset=True)
+SUCCESS = Fore.GREEN + Style.BRIGHT
 
 class DBconnection:
     # DB connection info
-    username = "root"
-    password = "Saksham@2023"
-    db_name = "REAL_ESTATE"
-    host = "localhost"
+    username = ""  # Fill your MySQL username
+    password = ""  # Fill your MySQL password
+    db_name = ""   # Fill your database name (e.g., REAL_ESTATE)
+    host = ""      # Fill your host (e.g., localhost)
     port = 3306
 
     conn = None
@@ -29,7 +32,13 @@ class DBconnection:
         print('Database connection closed.')
 
     def execute_query(self, query, params=None, fetch=False):
-        self.cursor.execute(query, params)
+        # Accept (query, params) tuple or just query string
+        if isinstance(query, tuple):
+            query, params = query
+        if params is None:
+            self.cursor.execute(query)
+        else:
+            self.cursor.execute(query, params)
         if fetch:
             return self.cursor.fetchall()
         else:
@@ -39,7 +48,7 @@ class DBconnection:
     def connect(self):
         self.try_to_connect += 1
         print()
-        print(f'({self.try_to_connect}) Trying to connect to {self.db_name}...')
+        print(SUCCESS + f'({self.try_to_connect}) Trying to connect to {self.db_name}...')
         try:
             self.conn = pymysql.connect(host=self.host,
                                         port=self.port,
@@ -48,7 +57,7 @@ class DBconnection:
                                         database=self.db_name,
                                         cursorclass=pymysql.cursors.DictCursor)
             if self.conn.open:
-                print("Connected")
+                print(SUCCESS + "Connected")
                 print()
             else:
                 raise Exception("Failed to connect")
